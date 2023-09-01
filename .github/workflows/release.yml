@@ -17,6 +17,8 @@ on:
       - 'Makefile'
       - 'README*'
       - 'src/**'
+  workflow_dispatch:
+    # manual trigger
 
 env:
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -78,92 +80,6 @@ jobs:
             ext: zip
             content: application/zip
             sound: 1
-          - name: Windows Object Creator x64
-            mxe: x86_64
-            artifact: windows-objectcreator-x64
-            android: none
-            os: ubuntu-latest
-            ext: zip
-            content: application/zip
-          - name: Linux Tiles x64
-            os: ubuntu-20.04
-            mxe: none
-            android: none
-            tiles: 1
-            sound: 0
-            artifact: linux-tiles-x64
-            ext: tar.gz
-            content: application/gzip
-          - name: Linux Tiles Sounds x64
-            os: ubuntu-20.04
-            mxe: none
-            android: none
-            tiles: 1
-            sound: 1
-            artifact: linux-tiles-sounds-x64
-            ext: tar.gz
-            content: application/gzip
-          - name: Linux Curses x64
-            os: ubuntu-20.04
-            mxe: none
-            android: none
-            tiles: 0
-            sound: 0
-            artifact: linux-curses-x64
-            ext: tar.gz
-            content: application/gzip
-          - name: Linux object creator x64
-            os: ubuntu-20.04
-            mxe: none
-            android: none
-            artifact: linux-objectcreator-x64
-            ext: tar.gz
-            content: application/gzip
-          - name: macOS Curses Universal Binary (x64 and arm64)
-            os: macos-12
-            mxe: none
-            tiles: 0
-            sound: 0
-            artifact: osx-curses-universal
-            ext: dmg
-            content: application/x-apple-diskimage
-          - name: macOS Tiles Universal Binary (x64 and arm64)
-            os: macos-12
-            mxe: none
-            tiles: 1
-            sound: 0
-            artifact: osx-tiles-universal
-            ext: dmg
-            content: application/x-apple-diskimage
-          - name: Android x64
-            os: ubuntu-latest
-            mxe: none
-            android: arm64
-            artifact: android-x64
-            ext: apk
-            content: application/apk
-          - name: Android x32
-            os: ubuntu-latest
-            mxe: none
-            android: arm32
-            artifact: android-x32
-            ext: apk
-            content: application/apk 
-          - name: Android Bundle
-            os: ubuntu-latest
-            mxe: none
-            android: bundle
-            artifact: android-bundle
-            ext: aab
-            content: application/aap
-          - name: WebAssembly Bundle
-            os: ubuntu-latest
-            mxe: none
-            artifact: wasm
-            ext: zip
-            content: application/zip
-            sound: 0
-            wasm: true
     name: ${{ matrix.name }}
     runs-on: ${{ matrix.os }}
     permissions: write-all
@@ -210,28 +126,6 @@ jobs:
           curl -L -o libbacktrace-${{ matrix.mxe }}-w64-mingw32.tar.gz https://github.com/Qrox/libbacktrace/releases/download/2020-01-03/libbacktrace-${{ matrix.mxe }}-w64-mingw32.tar.gz
           shasum -a 256 -c ./build-scripts/libbacktrace-${{ matrix.mxe }}-w64-mingw32-sha256
           sudo tar -xzf libbacktrace-${{ matrix.mxe }}-w64-mingw32.tar.gz --exclude=LICENSE -C /opt/mxe/usr/${{ matrix.mxe }}-w64-mingw32.static.gcc12
-      - name: Install dependencies (Linux)
-        if: runner.os == 'Linux' && matrix.mxe == 'none' && matrix.android == 'none' && !matrix.wasm
-        run: |
-          sudo apt-get update
-          sudo apt-get install libncursesw5-dev libsdl2-dev libsdl2-ttf-dev libsdl2-image-dev \
-            libsdl2-mixer-dev libpulse-dev ccache gettext parallel
-      - name: Install Emscripten (WebAssembly)
-        if: matrix.wasm
-        uses: mymindstorm/setup-emsdk@v13
-      - name: Install runtime dependencies (mac)
-        if: runner.os == 'macOS'
-        uses: BrettDong/setup-sdl2-frameworks@v1
-        with:
-          sdl2: latest
-          sdl2-ttf: latest
-          sdl2-image: latest
-          sdl2-mixer: latest
-      - name: Install build dependencies (mac)
-        if: runner.os == 'macOS'
-        run: |
-          HOMEBREW_NO_AUTO_UPDATE=yes HOMEBREW_NO_INSTALL_CLEANUP=yes brew install gettext ccache parallel
-          pip3 install dmgbuild biplist
       - name: Create VERSION.TXT
         shell: bash
         run: |
@@ -246,53 +140,6 @@ jobs:
         shell: bash
         run: |
           lang/compile_mo.sh all
-      - name: Build CDDA (linux)
-        if: runner.os == 'Linux' && matrix.mxe == 'none' && matrix.android == 'none' && matrix.artifact != 'linux-objectcreator-x64' && !matrix.wasm
-        run: |
-          make -j$((`nproc`+0)) TILES=${{ matrix.tiles }} SOUND=${{ matrix.tiles }} RELEASE=1 LOCALIZE=1 LANGUAGES=all BACKTRACE=1 PCH=0 bindist
-          mv cataclysmdda-0.I.tar.gz cdda-${{ matrix.artifact }}-${{ needs.release.outputs.timestamp }}.tar.gz
-      - name: Build CDDA (WebAssembly)
-        if: matrix.wasm
-        run: |
-          ./build-scripts/prepare-web-data.sh
-          ./build-scripts/build-emscripten.sh
-          ./build-scripts/prepare-web.sh
-          (cd build && zip ../cdda-${{ matrix.artifact }}-${{ needs.release.outputs.timestamp }}.${{ matrix.ext }} *)
-      - name: Login to GitHub Container Registry
-        if: matrix.artifact == 'windows-objectcreator-x64' || matrix.artifact == 'linux-objectcreator-x64'
-        uses: docker/login-action@v2 
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Build object creator (windows)
-        if: matrix.artifact == 'windows-objectcreator-x64'
-        uses: devcontainers/ci@v0.3
-        with:
-          imageName: ghcr.io/cleverraven/cataclysm-dda/cataclysm-dda-devcontainer
-          cacheFrom: ghcr.io/cleverraven/cataclysm-dda/cataclysm-dda-devcontainer
-          push: always
-          runCmd: |
-            git config --global --add safe.directory /workspaces/Cataclysm-DDA
-            make object_creator.exe CROSS="/opt/mxe/usr/bin/x86_64-w64-mingw32.static-" TILES=1 SOUND=1 RELEASE=1 LOCALIZE=1 PREFIX=output PCH=0 MXE_TARGETS='x86_64-w64-mingw32.static' -j4
-      - name: Build object creator (linux)
-        if: matrix.artifact == 'linux-objectcreator-x64'
-        uses: devcontainers/ci@v0.3
-        with:
-          imageName: ghcr.io/cleverraven/cataclysm-dda/cataclysm-dda-devcontainer
-          cacheFrom: ghcr.io/cleverraven/cataclysm-dda/cataclysm-dda-devcontainer
-          push: never
-          runCmd: |
-            git config --global --add safe.directory /workspaces/Cataclysm-DDA
-            make -j$((`nproc`+0)) TILES=1 LINTJSON=0 RELEASE=1 object_creator
-      - name: zip Object Creator (windows)
-        if: matrix.artifact == 'windows-objectcreator-x64'
-        run: |
-            zip cdda-${{ matrix.artifact }}-${{ needs.release.outputs.timestamp }}.${{ matrix.ext }} ./object_creator/object_creator.exe ./object_creator/qt-license.txt
-      - name: tar Object Creator (linux)
-        if: matrix.artifact == 'linux-objectcreator-x64'
-        run: |
-            tar -czf cdda-${{ matrix.artifact }}-${{ needs.release.outputs.timestamp }}.${{ matrix.ext }} ./object_creator/object_creator ./object_creator/qt-license.txt
       - name: Build CDDA (windows mxe)
         if: matrix.mxe != 'none' && matrix.artifact != 'windows-objectcreator-x64'
         env:
@@ -310,45 +157,6 @@ jobs:
         run: |
           msbuild -m -p:Configuration=Release -p:Platform=${{ matrix.arch }} "-target:Cataclysm-vcpkg-static;JsonFormatter-vcpkg-static" msvc-full-features\Cataclysm-vcpkg-static.sln
           .\build-scripts\windist.ps1
-          mv cataclysmdda-0.I.zip cdda-${{ matrix.artifact }}-${{ needs.release.outputs.timestamp }}.zip
-      - name: Build CDDA (osx)
-        if: runner.os == 'macOS'
-        run: |
-          make -j3 TILES=${{ matrix.tiles }} SOUND=${{ matrix.tiles }} RELEASE=1 LOCALIZE=1 LANGUAGES=all BACKTRACE=0 PCH=0 USE_HOME_DIR=1 FRAMEWORK=1 UNIVERSAL_BINARY=1 dmgdist
-          mv Cataclysm.dmg cdda-${{ matrix.artifact }}-${{ needs.release.outputs.timestamp }}.dmg
-      - name: Set up JDK 8 (android)
-        if: runner.os == 'Linux' && matrix.android != 'none' && matrix.mxe == 'none'
-        uses: actions/setup-java@v3
-        with:
-          java-version: '11'
-          distribution: 'adopt'   
-      - name: Setup Build and Dependencies (android)
-        if: runner.os == 'Linux' && matrix.android != 'none' && matrix.mxe == 'none'
-        run: |
-          sudo apt-get update
-          sudo apt-get install gettext          
-      - name: Build CDDA (android)
-        if: runner.os == 'Linux' && matrix.android != 'none' && matrix.mxe == 'none'
-        working-directory: ./android
-        run: |
-          echo "${{ secrets.KEYSTORE }}" > release.keystore.asc   
-          gpg -d --passphrase "${{ secrets.KEYSTORE_PASSWORD }}" --batch release.keystore.asc > app/release.keystore 
-          echo "${{ secrets.KEYSTORE_PROPERTIES }}" > keystore.properties.asc   
-          gpg -d --passphrase "${{ secrets.KEYSTORE_PASSWORD }}" --batch keystore.properties.asc > keystore.properties
-          export UPSTREAM_BUILD_NUMBER="$((11581 + ${{ github.run_number }}))"
-          chmod +x gradlew
-          if [ ${{ matrix.android }} = arm64 ]
-          then
-               ./gradlew -Pj=$((`nproc`+0)) -Pabi_arm_32=false assembleExperimentalRelease
-               mv ./app/build/outputs/apk/experimental/release/*.apk ../cdda-${{ matrix.artifact }}-${{ needs.release.outputs.timestamp }}.apk
-          elif [ ${{ matrix.android }} = arm32 ]
-          then
-               ./gradlew -Pj=$((`nproc`+0)) -Pabi_arm_64=false assembleExperimentalRelease
-               mv ./app/build/outputs/apk/experimental/release/*.apk ../cdda-${{ matrix.artifact }}-${{ needs.release.outputs.timestamp }}.apk 
-          elif [ ${{ matrix.android }} = bundle ]
-          then
-               ./gradlew -Pj=$((`nproc`+0)) bundleExperimentalRelease
-               mv ./app/build/outputs/bundle/experimentalRelease/*.aab ../cdda-${{ matrix.artifact }}-${{ needs.release.outputs.timestamp }}.aab     
-          fi
+          mv cataclysmdda-0.I.zip cdda-${{ matrix.artifact }}-${{ needs.release.outputs.timestamp }}.zip    
       - run: |
           gh release upload cdda-experimental-${{ needs.release.outputs.timestamp }} cdda-${{ matrix.artifact }}-${{ needs.release.outputs.timestamp }}.${{ matrix.ext }}
