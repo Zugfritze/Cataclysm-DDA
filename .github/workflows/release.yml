@@ -71,7 +71,20 @@ jobs:
     env:
         ZSTD_CLEVEL: 17
     steps:
+      - name: Set environment variables (windows msvc)
+        if: runner.os == 'Windows'
+        run: |
+          echo "CCACHE_LIMIT=8GB" >> $env:GITHUB_ENV
+          echo "CDDA_CCACHE_PATH=${{ github.workspace }}\ccache\" >> $env:GITHUB_ENV
+          echo "CDDA_USE_CCACHE=true" >> $env:GITHUB_ENV
+          echo "CCACHE_HARDLINK=true" >> $env:GITHUB_ENV
       - uses: actions/checkout@v3
+      - name: Use GNU tar to enable zstd for actions/cache (windows msvc)
+        if: runner.os == 'Windows'
+        run: |
+          echo "Adding GNU tar to PATH"
+          echo C:\Program Files\Git\usr\bin>>"%GITHUB_PATH%"
+        shell: cmd
       - name: Install dependencies (windows msvc) (0/3)
         if: runner.os == 'Windows'
         uses: lukka/get-cmake@latest
@@ -127,6 +140,48 @@ jobs:
         run: |
           make -j$((`nproc`+0)) CROSS="${PLATFORM}" TILES=1 SOUND=1 RELEASE=1 LOCALIZE=1 LANGUAGES=all BACKTRACE=1 PCH=0 bindist
           mv cataclysmdda-0.I.zip cdda-${{ matrix.artifact }}-${{ needs.release.outputs.timestamp }}.zip
+      - name: Download ccache (windows msvc)
+        if: runner.os == 'Windows'
+        uses: robinraju/release-downloader@v1.4
+        with:
+          repository: 'ccache/ccache'
+          tag: 'v4.6.1'
+          fileName: 'ccache-4.6.1-windows-x86_64.zip'
+      - name: Install ccache (windows msvc)
+        id: install-ccache
+        if: runner.os == 'Windows'
+        run: |
+          unzip ccache-4.6.1-windows-x86_64.zip
+          cp ccache-4.6.1-windows-x86_64/ccache.exe ccache-4.6.1-windows-x86_64/cl.exe
+          cp ccache-4.6.1-windows-x86_64/ccache.exe ccache-4.6.1-windows-x86_64/clang-cl.exe
+          mv ccache-4.6.1-windows-x86_64 ${{ env.CDDA_CCACHE_PATH }}
+      - name: Get ccache vars (windows msvc)
+        id: get-vars
+        if: runner.os == 'Windows'
+        run: |
+          echo "datetime=$(/bin/date -u "+%Y%m%d%H%M")" >> $GITHUB_OUTPUT
+          echo "ccache-path=$(echo "$APPDATA\\ccache")" >> $GITHUB_OUTPUT
+        shell: bash
+      - name: ccache cache files (windows msvc)
+        if: runner.os == 'Windows'
+        uses: actions/cache@v3
+        with:
+          path: ${{ steps.get-vars.outputs.ccache-path }}
+          # double-dash after compiler is not a typo, it is to disambiguate between g++-<date> and g++-11-<date> for restore key prefix matching
+          key: ccache-${{ github.ref_name }}-${{ runner.os }}-msvc--${{ steps.get-vars.outputs.datetime }}
+          restore-keys: |
+            ccache-master-${{ runner.os }}-msvc--
+      - name: Configure ccache (windows msvc)
+        if: runner.os == 'Windows'
+        run: |
+          ${{ env.CDDA_CCACHE_PATH }}\ccache.exe -M 10G
+          ${{ env.CDDA_CCACHE_PATH }}\ccache.exe -s -v
+          ${{ env.CDDA_CCACHE_PATH }}\ccache.exe -z
+      - name: Symlink intermediates to C (windows msvc)
+        if: runner.os == 'Windows'
+        run: |
+          mkdir -p "$env:TEMP\objwin"
+          New-Item -ItemType SymbolicLink -Target "$env:TEMP\objwin" objwin
       - name: Build CDDA (windows msvc)
         if: runner.os == 'Windows'
         env:
@@ -138,5 +193,17 @@ jobs:
           msbuild -m -p:Configuration=Release -p:Platform=${{ matrix.arch }} "-target:Cataclysm-vcpkg-static;JsonFormatter-vcpkg-static" msvc-full-features\Cataclysm-vcpkg-static.sln
           .\build-scripts\windist.ps1
           mv cataclysmdda-0.I.zip cdda-${{ matrix.artifact }}-${{ needs.release.outputs.timestamp }}.zip    
+      - name: Post-build ccache manipulation (windows msvc)
+        if: ${{ !failure() && runner.os == 'Windows' }}
+        run: |
+          ${{ env.CDDA_CCACHE_PATH }}\ccache.exe -s -v
+          ${{ env.CDDA_CCACHE_PATH }}\ccache.exe -M ${{ env.CCACHE_LIMIT }}
+          ${{ env.CDDA_CCACHE_PATH }}\ccache.exe -c
+          ${{ env.CDDA_CCACHE_PATH }}\ccache.exe -s -v
+      - name: Don't upload vcpkg cache on failure (windows msvc)
+        if: ${{ failure() || cancelled() && runner.os == 'Windows' }}
+        run: |
+          echo "RUNVCPKG_NO_CACHE=1" >> $GITHUB_ENV
+        shell: bash
       - run: |
           gh release upload cdda-experimental-${{ needs.release.outputs.timestamp }} cdda-${{ matrix.artifact }}-${{ needs.release.outputs.timestamp }}.${{ matrix.ext }}
