@@ -58,14 +58,6 @@ jobs:
             ext: zip
             content: application/zip
             sound: 0
-          - name: Windows Tiles Sounds x64 MSVC
-            artifact: windows-tiles-sounds-x64-msvc
-            arch: x64
-            os: windows-2019
-            mxe: none
-            ext: zip
-            content: application/zip
-            sound: 1
           - name: Windows Tiles x64
             mxe: x86_64
             artifact: windows-tiles-x64
@@ -73,13 +65,6 @@ jobs:
             ext: zip
             content: application/zip
             sound: 0
-          - name: Windows Tiles Sounds x64
-            mxe: x86_64
-            artifact: windows-tiles-sounds-x64
-            os: ubuntu-latest
-            ext: zip
-            content: application/zip
-            sound: 1
     name: ${{ matrix.name }}
     runs-on: ${{ matrix.os }}
     permissions: write-all
@@ -87,11 +72,6 @@ jobs:
         ZSTD_CLEVEL: 17
     steps:
       - uses: actions/checkout@v3
-      - name: Get soundpack
-        if: matrix.sound == 1
-        run: |
-          git clone --depth=1 --shallow-submodules --recurse-submodules https://github.com/Fris0uman/CDDA-Soundpacks '${{ github.workspace }}/CDDA-Soundpacks'
-          mv '${{ github.workspace }}/CDDA-Soundpacks/sound/CC-Sounds' '${{ github.workspace }}/data/sound'
       - name: Install dependencies (windows msvc) (0/3)
         if: runner.os == 'Windows'
         uses: lukka/get-cmake@latest
