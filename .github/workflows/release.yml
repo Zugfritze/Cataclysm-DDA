@@ -58,6 +58,16 @@ jobs:
             ext: zip
             content: application/zip
             sound: 0
+            compiler: msvc
+          - name: Windows Tiles x64 ClangCL
+            artifact: windows-tiles-x64-clangcl
+            arch: x64
+            os: windows-2019
+            mxe: none
+            ext: zip
+            content: application/zip
+            sound: 0
+            compiler: clangcl
           - name: Windows Tiles x64
             mxe: x86_64
             artifact: windows-tiles-x64
@@ -169,9 +179,9 @@ jobs:
         with:
           path: ${{ steps.get-vars.outputs.ccache-path }}
           # double-dash after compiler is not a typo, it is to disambiguate between g++-<date> and g++-11-<date> for restore key prefix matching
-          key: ccache-${{ github.ref_name }}-${{ runner.os }}-msvc--${{ steps.get-vars.outputs.datetime }}
+          key: ccache-${{ github.ref_name }}-${{ runner.os }}-${{ matrix.compiler }}--${{ steps.get-vars.outputs.datetime }}
           restore-keys: |
-            ccache-master-${{ runner.os }}-msvc--
+            ccache-master-${{ runner.os }}-${{ matrix.compiler }}--
       - name: Configure ccache (windows msvc)
         if: runner.os == 'Windows'
         run: |
@@ -184,7 +194,7 @@ jobs:
           mkdir -p "$env:TEMP\objwin"
           New-Item -ItemType SymbolicLink -Target "$env:TEMP\objwin" objwin
       - name: Build CDDA (windows msvc)
-        if: runner.os == 'Windows'
+        if: ${{ runner.os == 'Windows' && matrix.compiler == 'msvc' }}
         env:
           # Enable pretty backtraces
           BACKTRACE: 1
@@ -192,6 +202,18 @@ jobs:
           VCPKG_OVERLAY_TRIPLETS: ${{ github.workspace }}\.github\vcpkg_triplets
         run: |
           msbuild -m -p:Configuration=Release -p:Platform=${{ matrix.arch }} "-target:Cataclysm-vcpkg-static;JsonFormatter-vcpkg-static" msvc-full-features\Cataclysm-vcpkg-static.sln
+          .\build-scripts\windist.ps1
+          mv cataclysmdda-0.I.zip cdda-${{ matrix.artifact }}-${{ needs.release.outputs.timestamp }}.zip    
+      - name: Build CDDA ClangCL (windows msvc)
+        if: ${{ runner.os == 'Windows' && matrix.compiler == 'clangcl' }}
+        env:
+          # Enable pretty backtraces
+          BACKTRACE: 1
+          CDDA_RELEASE_BUILD: 1
+          CDDA_ENABLE_THIN_ARCHIVES: 1
+          VCPKG_OVERLAY_TRIPLETS: ${{ github.workspace }}\.github\vcpkg_triplets
+        run: |
+          msbuild -m -p:PlatformToolset=ClangCL -p:Configuration=Release -p:Platform=${{ matrix.arch }} "-target:Cataclysm-vcpkg-static;JsonFormatter-vcpkg-static" msvc-full-features\Cataclysm-vcpkg-static.sln
           .\build-scripts\windist.ps1
           mv cataclysmdda-0.I.zip cdda-${{ matrix.artifact }}-${{ needs.release.outputs.timestamp }}.zip    
       - name: Post-build ccache manipulation (windows msvc)
