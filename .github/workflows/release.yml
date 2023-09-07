@@ -75,6 +75,7 @@ jobs:
         CDDA_CCACHE_PATH: ${{ github.workspace }}\ccache\
         CDDA_USE_CCACHE: true
         CCACHE_HARDLINK: true
+        CCACHE_COMPILERCHECK: content
     steps:
       - uses: actions/checkout@v3
       - name: 应用patch
