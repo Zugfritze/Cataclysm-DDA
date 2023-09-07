@@ -77,6 +77,11 @@ jobs:
         CCACHE_HARDLINK: true
     steps:
       - uses: actions/checkout@v3
+      - name: 应用patch
+        if: runner.os == 'Windows'
+        run: |
+          git clone --depth=1 https://github.com/Zugfritze/CDDA-patch '${{ github.workspace }}\CDDA-patch'
+          ${{ github.workspace }}\CDDA-patch\应用patch.ps1
       - name: Use GNU tar to enable zstd for actions/cache (windows msvc)
         if: runner.os == 'Windows'
         run: |
