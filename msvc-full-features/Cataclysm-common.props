@@ -21,6 +21,10 @@
     <_CDDA_USE_LLD_LINK Condition="'$(CDDA_USE_LLD_LINK)'!='' Or $(_CDDA_ENABLE_THIN_ARCHIVES)">true</_CDDA_USE_LLD_LINK>
     <_CDDA_USE_CLANGCL_LTO>false</_CDDA_USE_CLANGCL_LTO>
     <_CDDA_USE_CLANGCL_LTO Condition="'$(CDDA_USE_CLANGCL_LTO)'!=''">true</_CDDA_USE_CLANGCL_LTO>
+    <_CDDA_USE_CLANGCL_LTO_CACHE>false</_CDDA_USE_CLANGCL_LTO_CACHE>
+    <_CDDA_USE_CLANGCL_LTO_CACHE Condition="'$(CDDA_USE_CLANGCL_LTO_CACHE)'!=''">true</_CDDA_USE_CLANGCL_LTO_CACHE>
+    <_CDDA_USE_CLANGCL_LTO_CACHE_LIMIT>false</_CDDA_USE_CLANGCL_LTO_CACHE_LIMIT>
+    <_CDDA_USE_CLANGCL_LTO_CACHE_LIMIT Condition="'$(CDDA_USE_CLANGCL_LTO_CACHE_LIMIT)'!=''">true</_CDDA_USE_CLANGCL_LTO_CACHE_LIMIT>
   </PropertyGroup>
   <PropertyGroup Label="Vcpkg">
     <VcpkgAdditionalInstallOptions>--clean-after-build</VcpkgAdditionalInstallOptions>
@@ -73,6 +77,12 @@
     <ClCompile Condition="$(_CDDA_USE_CLANGCL_LTO)">
       <AdditionalOptions>-flto=thin %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
+    <Link Condition="$(_CDDA_USE_CLANGCL_LTO_CACHE)">
+      <AdditionalOptions>/lldltocache:$(CDDA_USE_CLANGCL_LTO_CACHE) %(AdditionalOptions)</AdditionalOptions>
+    </Link>
+    <Link Condition="$(_CDDA_USE_CLANGCL_LTO_CACHE_LIMIT)">
+      <AdditionalOptions>/lldltocachepolicy:cache_size_bytes=$(CDDA_USE_CLANGCL_LTO_CACHE_LIMIT) %(AdditionalOptions)</AdditionalOptions>
+    </Link>
     <Lib Condition="$(_CDDA_ENABLE_THIN_ARCHIVES)">
       <AdditionalOptions>/llvmlibthin $(AdditionalOptions)</AdditionalOptions>
     </Lib>

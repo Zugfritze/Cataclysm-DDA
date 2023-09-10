@@ -173,6 +173,14 @@ jobs:
           msbuild -m -p:Configuration=Release -p:Platform=${{ matrix.arch }} "-target:Cataclysm-vcpkg-static;JsonFormatter-vcpkg-static" msvc-full-features\Cataclysm-vcpkg-static.sln
           .\build-scripts\windist.ps1
           mv cataclysmdda-0.I.zip cdda-${{ matrix.artifact }}-${{ needs.release.outputs.timestamp }}.zip    
+      - name: ClangCL LTO cache files (windows msvc)
+        if: runner.os == 'Windows'
+        uses: actions/cache@v3
+        with:
+          path: ${{ github.workspace }}\lto-cache
+          key: ClangCL-LTO-${{ github.ref_name }}-${{ steps.get-vars.outputs.datetime }}
+          restore-keys: |
+            ClangCL-LTO-master-
       - name: Build CDDA ClangCL (windows msvc)
         if: ${{ runner.os == 'Windows' && matrix.compiler == 'clangcl' }}
         env:
@@ -181,6 +189,8 @@ jobs:
           CDDA_RELEASE_BUILD: 1
           CDDA_ENABLE_THIN_ARCHIVES: 1
           CDDA_USE_CLANGCL_LTO: 1
+          CDDA_USE_CLANGCL_LTO_CACHE: ${{ github.workspace }}\lto-cache
+          CDDA_USE_CLANGCL_LTO_CACHE_LIMIT: 8g
           VCPKG_OVERLAY_TRIPLETS: ${{ github.workspace }}\.github\vcpkg_triplets
         run: |
           msbuild -m -p:PlatformToolset=ClangCL -p:Configuration=Release -p:Platform=${{ matrix.arch }} "-target:Cataclysm-vcpkg-static;JsonFormatter-vcpkg-static" msvc-full-features\Cataclysm-vcpkg-static.sln
