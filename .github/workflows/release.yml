@@ -174,7 +174,7 @@ jobs:
           .\build-scripts\windist.ps1
           mv cataclysmdda-0.I.zip cdda-${{ matrix.artifact }}-${{ needs.release.outputs.timestamp }}.zip    
       - name: ClangCL LTO cache files (windows msvc)
-        if: runner.os == 'Windows'
+        if: ${{ runner.os == 'Windows' && matrix.compiler == 'clangcl' }}
         uses: actions/cache@v3
         with:
           path: ${{ github.workspace }}\lto-cache
