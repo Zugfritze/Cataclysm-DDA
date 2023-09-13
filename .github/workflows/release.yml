@@ -53,7 +53,7 @@ jobs:
           - name: Windows Tiles x64 MSVC
             artifact: windows-tiles-x64-msvc
             arch: x64
-            os: windows-2019
+            os: windows-2022
             ext: zip
             content: application/zip
             sound: 0
@@ -61,7 +61,7 @@ jobs:
           - name: Windows Tiles x64 ClangCL
             artifact: windows-tiles-x64-clangcl
             arch: x64
-            os: windows-2019
+            os: windows-2022
             ext: zip
             content: application/zip
             sound: 0
