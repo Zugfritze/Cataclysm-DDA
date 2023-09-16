@@ -25,6 +25,8 @@
     <_CDDA_USE_CLANGCL_LTO_CACHE Condition="'$(CDDA_USE_CLANGCL_LTO_CACHE)'!=''">true</_CDDA_USE_CLANGCL_LTO_CACHE>
     <_CDDA_USE_CLANGCL_LTO_CACHE_LIMIT>false</_CDDA_USE_CLANGCL_LTO_CACHE_LIMIT>
     <_CDDA_USE_CLANGCL_LTO_CACHE_LIMIT Condition="'$(CDDA_USE_CLANGCL_LTO_CACHE_LIMIT)'!=''">true</_CDDA_USE_CLANGCL_LTO_CACHE_LIMIT>
+    <_ENABLE_CDDA_SAVE_BACKUP>false</_ENABLE_CDDA_SAVE_BACKUP>
+    <_ENABLE_CDDA_SAVE_BACKUP Condition="'$(ENABLE_CDDA_SAVE_BACKUP)'!=''">true</_ENABLE_CDDA_SAVE_BACKUP>
   </PropertyGroup>
   <PropertyGroup Label="Vcpkg">
     <VcpkgAdditionalInstallOptions>--clean-after-build</VcpkgAdditionalInstallOptions>
@@ -82,6 +84,19 @@
     </Link>
     <Link Condition="$(_CDDA_USE_CLANGCL_LTO_CACHE_LIMIT)">
       <AdditionalOptions>/lldltocachepolicy:cache_size_bytes=$(CDDA_USE_CLANGCL_LTO_CACHE_LIMIT) %(AdditionalOptions)</AdditionalOptions>
+    </Link>
+    <ClCompile Condition="$(_ENABLE_CDDA_SAVE_BACKUP)">
+      <PreprocessorDefinitions>CDDA_SAVE_BACKUP;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
+    <Link Condition="$(_ENABLE_CDDA_SAVE_BACKUP)">
+      <AdditionalLibraryDirectories>
+        $(ENABLE_CDDA_SAVE_BACKUP)\target\release;%(AdditionalLibraryDirectories)
+      </AdditionalLibraryDirectories>
+      <AdditionalDependencies>
+        ntdll.lib;
+        cdda_save_backup.lib;
+        %(AdditionalDependencies)
+      </AdditionalDependencies>
     </Link>
     <Lib Condition="$(_CDDA_ENABLE_THIN_ARCHIVES)">
       <AdditionalOptions>/llvmlibthin %(AdditionalOptions)</AdditionalOptions>
