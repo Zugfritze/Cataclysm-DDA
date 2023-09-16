@@ -84,7 +84,7 @@
       <AdditionalOptions>/lldltocachepolicy:cache_size_bytes=$(CDDA_USE_CLANGCL_LTO_CACHE_LIMIT) %(AdditionalOptions)</AdditionalOptions>
     </Link>
     <Lib Condition="$(_CDDA_ENABLE_THIN_ARCHIVES)">
-      <AdditionalOptions>/llvmlibthin $(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/llvmlibthin %(AdditionalOptions)</AdditionalOptions>
     </Lib>
     <Link>
       <GenerateDebugInformation>DebugFastLink</GenerateDebugInformation>
