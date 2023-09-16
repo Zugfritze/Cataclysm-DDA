@@ -197,6 +197,10 @@
 #include "sdl_utils.h"
 #endif // TILES
 
+#if defined(CDDA_SAVE_BACKUP)
+#include "cdda_save_backup.h"
+#endif // CDDA_SAVE_BACKUP
+
 class computer;
 
 static const activity_id ACT_BLEED( "ACT_BLEED" );
@@ -3429,6 +3433,11 @@ bool game::save()
             // is called.
             EM_ASM( window.game_unsaved = false; );
 #endif
+            #if defined(CDDA_SAVE_BACKUP)
+            if ( !cxx_backup_save( PATH_INFO::world_base_save_path(), PATH_INFO::savedir() + "/backup" ) ) {
+                add_msg( m_info, "存档备份失败!!!" );
+            }
+            #endif // CDDA_SAVE_BACKUP
             return true;
         }
     } catch( std::ios::failure & ) {

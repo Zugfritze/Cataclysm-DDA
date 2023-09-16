@@ -168,8 +168,10 @@ jobs:
           # Enable pretty backtraces
           BACKTRACE: 1
           CDDA_RELEASE_BUILD: 1
+          ENABLE_CDDA_SAVE_BACKUP: ${{ github.workspace }}\CDDA-Save-Backup
           VCPKG_OVERLAY_TRIPLETS: ${{ github.workspace }}\.github\vcpkg_triplets
         run: |
+          .\build-scripts\enable_cdda_save_backup.ps1
           msbuild -m -p:Configuration=Release -p:Platform=${{ matrix.arch }} "-target:Cataclysm-vcpkg-static;JsonFormatter-vcpkg-static" msvc-full-features\Cataclysm-vcpkg-static.sln
           .\build-scripts\windist.ps1
           mv cataclysmdda-0.I.zip cdda-${{ matrix.artifact }}-${{ needs.release.outputs.timestamp }}.zip    
@@ -191,8 +193,10 @@ jobs:
           CDDA_USE_CLANGCL_LTO: 1
           CDDA_USE_CLANGCL_LTO_CACHE: ${{ github.workspace }}\lto-cache
           CDDA_USE_CLANGCL_LTO_CACHE_LIMIT: 8g
+          ENABLE_CDDA_SAVE_BACKUP: ${{ github.workspace }}\CDDA-Save-Backup
           VCPKG_OVERLAY_TRIPLETS: ${{ github.workspace }}\.github\vcpkg_triplets
         run: |
+          .\build-scripts\enable_cdda_save_backup.ps1
           msbuild -m -p:PlatformToolset=ClangCL -p:Configuration=Release -p:Platform=${{ matrix.arch }} "-target:Cataclysm-vcpkg-static;JsonFormatter-vcpkg-static" msvc-full-features\Cataclysm-vcpkg-static.sln
           .\build-scripts\windist.ps1
           mv cataclysmdda-0.I.zip cdda-${{ matrix.artifact }}-${{ needs.release.outputs.timestamp }}.zip    
