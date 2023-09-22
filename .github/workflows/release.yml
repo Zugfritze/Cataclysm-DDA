@@ -66,6 +66,13 @@ jobs:
             content: application/zip
             sound: 0
             compiler: clangcl
+          - name: Windows Object Creator x64
+            mxe: x86_64
+            artifact: windows-objectcreator-x64
+            android: none
+            os: ubuntu-latest
+            ext: zip
+            content: application/zip
     name: ${{ matrix.name }}
     runs-on: ${{ matrix.os }}
     permissions: write-all
@@ -120,6 +127,27 @@ jobs:
         shell: bash
         run: |
           lang/compile_mo.sh all
+      - name: Login to GitHub Container Registry
+        if: matrix.artifact == 'windows-objectcreator-x64' || matrix.artifact == 'linux-objectcreator-x64'
+        uses: docker/login-action@v2 
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build object creator (windows)
+        if: matrix.artifact == 'windows-objectcreator-x64'
+        uses: devcontainers/ci@v0.3
+        with:
+          imageName: ghcr.io/cleverRaven/cataclysm-dda/cataclysm-dda-devcontainer
+          cacheFrom: ghcr.io/cleverRaven/cataclysm-dda/cataclysm-dda-devcontainer
+          push: always
+          runCmd: |
+            git config --global --add safe.directory /workspaces/Cataclysm-DDA
+            make object_creator.exe CROSS="/opt/mxe/usr/bin/x86_64-w64-mingw32.static-" TILES=1 SOUND=1 RELEASE=1 LOCALIZE=1 PREFIX=output PCH=0 MXE_TARGETS='x86_64-w64-mingw32.static' -j4
+      - name: zip Object Creator (windows)
+        if: matrix.artifact == 'windows-objectcreator-x64'
+        run: |
+            zip cdda-${{ matrix.artifact }}-${{ needs.release.outputs.timestamp }}.${{ matrix.ext }} ./object_creator/object_creator.exe ./object_creator/qt-license.txt
       - name: Download ccache (windows msvc)
         if: runner.os == 'Windows'
         uses: robinraju/release-downloader@v1.4
