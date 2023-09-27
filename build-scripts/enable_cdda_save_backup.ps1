@@ -7,6 +7,7 @@ if (-not ($null -eq $CDDASaveBackupgitpath)) {
     Invoke-Expression -Command "cargo build --profile release"
     Copy-Item -Path "$CDDASaveBackupgitpath\target\cxxbridge\cdda_save_backup\src\lib.rs.h" -Destination "$OriginalDirectory\src\cdda_save_backup.h"
     Copy-Item -Path "$CDDASaveBackupgitpath\target\cxxbridge\cdda_save_backup\src\lib.rs.cc" -Destination "$OriginalDirectory\src\cdda_save_backup.cpp"
+    Copy-Item -Path "$CDDASaveBackupgitpath\target\release\cdda_read_save_backup.exe" -Destination "$OriginalDirectory\cdda_read_save_backup.exe"
     Set-Location -Path $OriginalDirectory
 }
 else {
