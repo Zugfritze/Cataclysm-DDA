@@ -12,6 +12,8 @@ catch {
 }
 cp tools/format/json_formatter.exe bindist/json_formatter.exe
 
+cp cdda_read_save_backup.exe bindist/cdda_read_save_backup.exe
+
 mkdir bindist/lang
 cp -r lang/mo bindist/lang
 
