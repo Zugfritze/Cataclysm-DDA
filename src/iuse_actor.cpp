@@ -2919,7 +2919,7 @@ bool repair_item_actor::can_repair_target( Character &pl, const item &fix, bool 
         return true;
     }
 
-    if( fix.damage() > fix.degradation() ) {
+    if( fix.damage() > 0 || fix.degradation() > 0 ) {
         return true;
     }
 
@@ -2990,7 +2990,7 @@ std::pair<float, float> repair_item_actor::repair_chance(
 repair_item_actor::repair_type repair_item_actor::default_action( const item &fix,
         int current_skill_level ) const
 {
-    if( fix.damage() > fix.degradation() ) {
+    if( fix.damage() > 0 || fix.degradation() > 0 ) {
         return RT_REPAIR;
     }
 
@@ -3126,6 +3126,7 @@ repair_item_actor::attempt_hint repair_item_actor::repair( Character &pl, item &
             handle_components( pl, *fix, false, false, true );
 
             fix->mod_damage( -itype::damage_scale );
+            fix->set_degradation( fix->degradation() - itype::damage_scale );
 
             const std::string resultdurability = fix->durability_indicator( true );
             if( fix->repairable_levels() ) {
