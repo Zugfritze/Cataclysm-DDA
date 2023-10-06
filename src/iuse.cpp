@@ -5433,7 +5433,7 @@ std::optional<int> gun_repair( Character *p, item *, item_location &loc )
         p->add_msg_if_player( m_info, _( "You can't see to do that!" ) );
         return std::nullopt;
     }
-    if( fix.damage() <= fix.degradation() ) {
+    if( fix.damage() <= 0 ) {
         const char *msg = fix.damage_level() > 0 ?
                           _( "You can't improve your %s any more, considering the degradation." ) :
                           _( "You can't improve your %s any more this way." );
@@ -5446,6 +5446,7 @@ std::optional<int> gun_repair( Character *p, item *, item_location &loc )
     p->moves -= to_moves<int>( 20_seconds );
 
     fix.mod_damage( -itype::damage_scale );
+    fix.set_degradation( fix.degradation() - itype::damage_scale );
 
     const std::string msg = fix.damage_level() == 0
                             ? _( "You repair your %s completely!  ( %s-> %s)" )
