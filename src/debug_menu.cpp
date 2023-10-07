@@ -1799,12 +1799,12 @@ static void character_edit_desc_menu( Character &you )
         break;
         case 2: {
             string_input_popup popup;
-            popup.title( _( "Enter age in years.  Minimum 16, maximum 55" ) )
+            popup.title( _( "输入年龄（岁）。最小11，最大55" ) )
             .text( string_format( "%d", you.base_age() ) )
             .only_digits( true );
             const int result = popup.query_int();
             if( result != 0 ) {
-                you.set_base_age( clamp( result, 16, 55 ) );
+                you.set_base_age( clamp( result, 11, 55 ) );
             }
         }
         break;

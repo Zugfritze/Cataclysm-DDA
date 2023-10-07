@@ -4096,7 +4096,7 @@ void set_description( tab_manager &tabs, avatar &you, const bool allow_reroll,
         }
     } );
 
-    int min_allowed_age = 16;
+    int min_allowed_age = 11;
     int max_allowed_age = 55;
 
     int min_allowed_height = Character::min_height();
@@ -4291,7 +4291,7 @@ void set_description( tab_manager &tabs, avatar &you, const bool allow_reroll,
                 you.pick_name();
                 no_name_entered = you.name.empty();
             }
-            you.set_base_age( rng( 16, 55 ) );
+            you.set_base_age( rng( 11, 55 ) );
             you.randomize_height();
             you.randomize_blood();
             you.randomize_heartrate();
@@ -4350,12 +4350,12 @@ void set_description( tab_manager &tabs, avatar &you, const bool allow_reroll,
                     break;
                 }
                 case char_creation::AGE: {
-                    popup.title( _( "Enter age in years.  Minimum 16, maximum 55" ) )
+                    popup.title( _( "输入年龄（岁）。最小11，最大55" ) )
                     .text( string_format( "%d", you.base_age() ) )
                     .only_digits( true );
                     const int result = popup.query_int();
                     if( result != 0 ) {
-                        you.set_base_age( clamp( result, 16, 55 ) );
+                        you.set_base_age( clamp( result, 11, 55 ) );
                     }
                     break;
                 }
