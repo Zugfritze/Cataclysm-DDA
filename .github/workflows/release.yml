@@ -40,7 +40,7 @@ jobs:
         run: |
           echo "tag_name=cdda-experimental-${{ steps.get-timestamp.outputs.time }}" >> $GITHUB_OUTPUT
           echo "release_name=Cataclysm-DDA experimental build ${{ steps.get-timestamp.outputs.time }}" >> $GITHUB_OUTPUT
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - run: |
           gh release create ${{ steps.generate_env_vars.outputs.tag_name }} --generate-notes --prerelease --title "${{ steps.generate_env_vars.outputs.release_name }}"
 
@@ -70,14 +70,14 @@ jobs:
     runs-on: ${{ matrix.os }}
     permissions: write-all
     env:
-        CCACHE_VERSION: 4.8.3
+        CCACHE_VERSION: 4.9
         CCACHE_LIMIT: 8GB
         CDDA_CCACHE_PATH: ${{ github.workspace }}\ccache\
         CDDA_USE_CCACHE: true
         CCACHE_HARDLINK: true
         CCACHE_COMPILERCHECK: content
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: 应用patch
         if: runner.os == 'Windows'
         run: |
@@ -122,7 +122,7 @@ jobs:
           lang/compile_mo.sh all
       - name: Download ccache (windows msvc)
         if: runner.os == 'Windows'
-        uses: robinraju/release-downloader@v1.4
+        uses: robinraju/release-downloader@v1.8
         with:
           repository: 'ccache/ccache'
           tag: 'v${{ env.CCACHE_VERSION }}'
